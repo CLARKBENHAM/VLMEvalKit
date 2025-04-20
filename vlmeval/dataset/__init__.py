@@ -69,6 +69,8 @@ class ConcatDataset(ImageBaseDataset):
             'MMBench_dev_ar', 'MMBench_dev_cn', 'MMBench_dev_en',
             'MMBench_dev_pt', 'MMBench_dev_ru', 'MMBench_dev_tr'
         ],
+        # 'GDTBenchmarkDataset': ['train'],
+        'gdt_vlmeval': ['GDTBenchmarkDataset', 'gdt_vlmeval']
     }
 
     def __init__(self, dataset):
@@ -155,7 +157,7 @@ IMAGE_DATASET = [
     MMNIAH, CMMMU, VLRewardBench, WeMath, LogicVista, MMMUProDataset,
     CreationMMBenchDataset, ImageShortQADataset, MMAlignBench, OmniDocBench,
     VLM2Bench, VMCBenchDataset, EMMADataset, MME_CoT, MOAT, MedXpertQA_MM_test,
-    LEGO, MMSci_Captioning, Physics_yale
+    LEGO, MMSci_Captioning, Physics_yale, GDTBenchmarkDataset
 ]
 
 

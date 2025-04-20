@@ -8,7 +8,6 @@ import io
 import re
 from typing import Dict, List, Any, Union
 
-# Import your existing functions
 from hadrian_vllm.prompt_generator import element_ids_per_img_few_shot
 from hadrian_vllm.utils import (
     load_csv,
@@ -19,29 +18,32 @@ from hadrian_vllm.evaluation import evaluate_answer
 from hadrian_vllm.result_processor import extract_answer
 from hadrian_vllm.model_caller import get_base64_image
 
-# We need these for VLMEvalKit integration
-from vlmeval.evaluate import Evaluator
-from vlmeval.smp import build_model
+#from vlmeval.evaluate import Evaluator
+from vlmeval.smp import get_logger, LMUDataRoot, load
 from vlmeval.dataset.image_base import ImageBaseDataset
 
 
 class GDTBenchmarkDataset(ImageBaseDataset):
     """Custom dataset class for GD&T benchmark evaluation"""
 
-    TYPE = "GDT"
-    DATASET_URL = None  # We'll load locally
-    DATASET_MD5 = None  # Skip MD5 check
+    TYPE = "VQA" # visual quesiton answering
+    # TYPE="MT" # Multi-turn, "true" but won't try for now. Would save as tsv not xlsx
+    DATASET_URL = {
+        'gdt_vlmeval': "https://huggingface.co/datasets/CLARKBENHAM/gdt_vlmeval/resolve/main/gdt_vlmeval.tsv"
+    }
+    DATASET_MD5 = {'gdt_vlmeval': "bda1f93077741973198f0e431ec28d30"}
 
     def __init__(
         self,
-        prompt_path: str = "/data2/Users/clark/hadrian_vllm/prompt6_claude_try_answers.txt",
+        dataset='train',  # ignore for now
+        # WARN: use absolute paths for all of these
+        prompt_path: str = "/data2/Users/clark/hadrian_vllm/data/prompts/prompt6_claude_try_answers.txt",
         csv_path: str = "/data2/Users/clark/hadrian_vllm/data/fsi_labels/Hadrian Vllm test case - Final Merge.csv",
         eval_dir: str = "/data2/Users/clark/hadrian_vllm/data/eval_on/single_images/",
-        n_shot_imgs: int = 6,
+        n_shot_imgs: int = 4,
         eg_per_img: int = 50,
         multiturn: bool = True,
     ):
-        super().__init__()
         self.prompt_path = prompt_path
         self.csv_path = csv_path
         self.eval_dir = eval_dir
@@ -49,19 +51,33 @@ class GDTBenchmarkDataset(ImageBaseDataset):
         self.eg_per_img = eg_per_img
         self.multiturn = multiturn
         assert self.multiturn, "wont implement single turn"
+        for path_name, path_value in [
+            ("prompt_path", prompt_path),
+            ("csv_path", csv_path),
+            ("eval_dir", eval_dir),
+        ]:
+            if not os.path.isabs(path_value):
+                raise ValueError(f"{path_name} must be an absolute path. Got: {path_value}")
+
+
+        self.logger = get_logger('GDTBenchmarkDataset')
 
         # Create data file name based on configuration
         prompt_name = os.path.basename(prompt_path).replace(".txt", "")
         config_str = f"{prompt_name}_{n_shot_imgs}_{eg_per_img}_{'mt' if multiturn else 'st'}"
-        self.data_file = f"data/datasets/gdt_benchmark_{config_str}.tsv"
+        #self.data_file = f"data/datasets/gdt_benchmark_{config_str}.tsv"
+        self.data_file = f"{LMUDataRoot()}/gdt_vlmeval.tsv"
 
         # Create the dataset if it doesn't exist
         if not os.path.exists(self.data_file):
             self._create_dataset()
 
+        super().__init__() # relies on self.data_file already existing
+        self.dataset_name='gdt_vlmeval' # overwrite dataset_name defined in inherited init
+
     def _create_dataset(self):
         """Create the dataset TSV file"""
-        print(
+        self.logger.info(
             "Creating GDT benchmark dataset with configuration: "
             f"{self.n_shot_imgs} shot images, {self.eg_per_img} examples per image, "
             f"{'multiturn' if self.multiturn else 'singleturn'}"
@@ -131,7 +147,9 @@ class GDTBenchmarkDataset(ImageBaseDataset):
                     "answer": [ground_truth],
                     "assembly_id": assembly_id,
                     "page_id": page_id,
-                    "image_paths": image_paths,
+                    # "image_paths": image_paths,
+                    # images must be absolute paths so can read out later
+                    # but dont need to worry directly since image data already within prompt_or_messages
                     "config": config,
                 }
 
@@ -142,11 +160,18 @@ class GDTBenchmarkDataset(ImageBaseDataset):
                     sample["question"] = prompt_or_messages
 
                 samples.append(sample)
+            if len(samples) > 5:
+                self.logger.warning("HARDCODE STOP AT 5 inputs")
+                print(prompt_or_messages) # TEMP
+                break
 
         # Create the dataset file
         os.makedirs(os.path.dirname(self.data_file), exist_ok=True)
         pd.DataFrame(samples).to_csv(self.data_file, sep="\t", index=False)
-        print(f"Created dataset with {len(samples)} samples at {self.data_file}")
+        self.logger.info(f"Created dataset with {len(samples)} samples at {self.data_file}")
+
+    def load_data(self, dataset): # grib if splits
+        return load(self.data_file)
 
     def build_prompt(self, line):
         """
@@ -154,22 +179,45 @@ class GDTBenchmarkDataset(ImageBaseDataset):
         This is what VLMEvalKit will call when evaluating.
         """
         if isinstance(line, int):
-            df = self.load()
-            line = df.iloc[line]
+            #df = self.load_data() # grib if splits
+            try:
+                line = self.data.iloc[line]  # self.data set in super().__init__
+            except:
+                df = load(self.data_file)
+                line = df.iloc[line]
 
         messages = eval(line["messages"])  # Convert string representation back to list
-        # [dict(type='image', value=IMAGE_PTH), dict(type='text', value=prompt)]
+        # [dict(type='image', value=IMAGE_PTH), dict(type='text', value=prompt)] # as ordering not list of lists
         return [
+            d
+            for m in messages
+            for d in
             (
                 [
-                    dict(type="text", role=m["role"], value=m["content"]),
                     dict(type="image", role=m["role"], value=m["image_path"]),
+                    dict(type="text", role=m["role"], value=m["content"]),
                 ]
                 if "image_path" in m
                 else [dict(type="text", role=m["role"], value=m["content"])]
             )
-            for m in messages
         ]
+
+        # dlgs = []
+        # for msg in messages:
+        #     if msg["role"] == 'system': # system prompt message is popposed off; don't have content just straight use value
+        #         #BaseAPI:preprocess_message_with_role
+        #         dlgs += [dict(role=msg["role"],type="text", value=msg['content'])]
+        #         continue
+
+        #     content = []
+        #     content.append(dict(type='text', value=msg["content"]))
+
+        #     # Send image paths not data
+        #     if "image_path" in msg:
+        #         content.append(dict(type='image', value=msg['image_path']))
+
+        #     dlgs.append(dict(role=msg['role'], content=content))
+        # return dlgs
 
         # # Format for VLMEvalKit
         # prompt_messages = []
@@ -195,35 +243,32 @@ class GDTBenchmarkDataset(ImageBaseDataset):
         Evaluate model outputs.
         Uses your existing evaluate_answer function.
         """
-        df = self.load(eval_file)
+        # WARN: stringified all columns
+        df = load(eval_file)
 
         # Evaluate each prediction
         results = []
         for _, row in df.iterrows():
             response = row["prediction"]
-            ground_truth = row["answer"]
+            ground_truth = eval(row["answer"])
 
-            preds = []
-            for element_id in row["element_ids"]:
+            for element_id, answer in zip(eval(row["element_ids"]), ground_truth):
                 model_pred = extract_answer(response, element_id)  # didn't test if could take list
-                preds.append(model_pred)
-
-        for model_pred, answer in zip(preds, ground_truth):
-            try:
-                score = evaluate_answer(model_pred, ground_truth)
-                is_correct = score == 1.0
-            except Exception as e:
-                print(f"Error evaluating: {e}")
-                is_correct = False
-
-            results.append(
-                {
-                    "element_id": row["element_id"],
-                    "correct": is_correct,
-                    "prediction": extracted_answer,
-                    "reference": ground_truth,
-                }
-            )
+                try:
+                    score = evaluate_answer(model_pred, answer)
+                    is_correct = score == 1.0
+                except Exception as e:
+                    self.logger.error(f"Error evaluating: {e}")
+                    is_correct = False
+                o={
+                        "element_id": row["element_ids"],
+                        "assembly_id": row["assembly_id"],
+                        "correct": is_correct,
+                        "prediction": model_pred,
+                        "answer": answer,
+                    }
+                self.logger.debug(o)
+                results.append(o)
 
         # Calculate overall metrics
         results_df = pd.DataFrame(results)
@@ -283,20 +328,38 @@ def run_evaluation(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluate GD&T models with VLMEvalKit")
-    parser.add_argument("--prompt", required=True, help="Path to prompt template file")
-    parser.add_argument(
-        "--csv_path", default="data/fsi_labels/Hadrian Vllm test case - Final Merge.csv"
-    )
-    parser.add_argument("--eval_dir", default="data/eval_on/single_images/")
-    parser.add_argument("--n_shot_imgs", type=int, default=3)
-    parser.add_argument("--eg_per_img", type=int, default=5)
-    parser.add_argument("--multiturn", action="store_true", help="Use multiturn format")
-    parser.add_argument("--model", default="llava", help="Model name in VLMEvalKit")
-    parser.add_argument("--model_path", help="Path/name for model initialization")
-    parser.add_argument("--batch_size", type=int, default=1)
-    parser.add_argument("--device", default="cuda:0")
-    parser.add_argument("--output_dir", default="results")
+    d = GDTBenchmarkDataset()
+    d._create_dataset()
+    from huggingface_hub import HfApi
+    api = HfApi()
 
-    args = parser.parse_args()
-    run_evaluation(args)
+    # Create the dataset repository
+    api.create_repo(repo_id="CLARKBENHAM/gdt_vlmeval", repo_type="dataset")
+
+    # Upload the file
+    api.upload_file(
+        #path_or_fileobj="/data2/Users/clark/LMUData/gdt_vlmeval.tsv",
+        path_or_fileobj=d.data_file,
+        path_in_repo="gdt_vlmeval.tsv",
+        repo_id="CLARKBENHAM/gdt_vlmeval",
+        repo_type="dataset"
+    )
+
+    if False:
+        parser = argparse.ArgumentParser(description="Evaluate GD&T models with VLMEvalKit")
+        parser.add_argument("--prompt", required=True, help="Path to prompt template file")
+        parser.add_argument(
+            "--csv_path", default="data/fsi_labels/Hadrian Vllm test case - Final Merge.csv"
+        )
+        parser.add_argument("--eval_dir", default="data/eval_on/single_images/")
+        parser.add_argument("--n_shot_imgs", type=int, default=3)
+        parser.add_argument("--eg_per_img", type=int, default=5)
+        parser.add_argument("--multiturn", action="store_true", help="Use multiturn format")
+        parser.add_argument("--model", default="llava", help="Model name in VLMEvalKit")
+        parser.add_argument("--model_path", help="Path/name for model initialization")
+        parser.add_argument("--batch_size", type=int, default=1)
+        parser.add_argument("--device", default="cuda:0")
+        parser.add_argument("--output_dir", default="results")
+
+        args = parser.parse_args()
+        run_evaluation(args)
