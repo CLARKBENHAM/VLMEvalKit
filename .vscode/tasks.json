@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        // {
+        //     "label": "activate-conda",
+        //     "type": "shell",
+        //     "command": "source $HOME/miniconda3/etc/profile.d/conda.sh && conda deactivate && conda activate py_3d_cad",
+        //     "problemMatcher": []
+        // }
+    ]
+}

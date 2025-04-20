@@ -13,6 +13,7 @@ from .image_vqa import (
     CustomVQADataset, CRPE, MathVerse, OlympiadBench, QSpatial, VizWiz, MMNIAH, LogicVista, MME_CoT,
     MMSci_Captioning, Physics_yale
 )
+from .gdt_vlmeval import GDTBenchmarkDataset
 
 from .image_ccocr import CCOCRDataset
 from .image_shortqa import ImageShortQADataset

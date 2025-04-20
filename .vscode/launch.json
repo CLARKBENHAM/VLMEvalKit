@@ -1,0 +1,139 @@
+{
+    "configurations": [
+        {
+            "name": "Python: Attach",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+        },
+        {
+            "name": "lmms_eval: Custom Model",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "/data2/Users/clark/lmms-eval/lmms_eval",
+            "console": "internalConsole",
+            "justMyCode": false,
+            "args": [
+                "--model",
+                "${input:modelType}",
+                "--model_args",
+                "${input:modelArgs}",
+                "--tasks",
+                "${input:tasks}",
+                "--batch_size",
+                "1",
+                "--log_samples",
+                "--log_samples_suffix",
+                "debug_custom_run",
+                "--output_path",
+                "./logs/"
+            ],
+            "python": "${command:python.interpreterPath}",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "5,6,7"
+            }
+        },
+        {
+            "name": "Python: Local Model",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/hadrian_vllm/main.py",
+            "console": "internalConsole",
+            "justMyCode": false,
+            "args": [
+                "--csv",
+                "data/fsi_labels/Hadrian Vllm test case - Final Merge.csv",
+                "--eval_dir",
+                "data/eval_on/asem_6_single_images/",
+                "--n_element_ids",
+                "1",
+                "--num_completions",
+                "1",
+                "--multiturn",
+                "--eval_all",
+                "--local",
+                "--prompt",
+                "data/prompts/prompt6_claude_try.txt",
+                "--model",
+                "Qwen/Qwen2.5-VL-7B-Instruct",
+                "--n_shot_imgs",
+                "1",
+                "--eg_per_img",
+                "50"
+            ],
+            "python": "${command:python.interpreterPath}",
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "7"
+            }
+        },
+        {
+            "name": "Python: main.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/hadrian_vllm/main.py",
+            "console": "internalConsole",
+            "justMyCode": false,
+            "args": [
+                "--prompt",
+                "data/prompts/prompt6_claude_try_answers.txt",
+                "--csv",
+                "data/fsi_labels/Hadrian Vllm test case - Final Merge.csv",
+                "--eval_dir",
+                "data/eval_on/single_images/",
+                "--model",
+                "gemini-2.0-flash-001",
+                "--n_shot_imgs",
+                "21",
+                "--eg_per_img",
+                "50",
+                "--n_element_ids",
+                "1",
+                "--num_completions",
+                "1",
+                "--multiturn",
+                "--eval_all",
+                "--eval-easy"
+            ]
+        },
+        {
+            "name": "Python: Current File (from repo root)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",
+            "console": "internalConsole",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}:${env:PYTHONPATH}"
+            }
+        },
+    ],
+    "inputs": [
+        {
+            "id": "modelType",
+            "type": "promptString",
+            "description": "Model type (e.g., llava, openai_compatible)",
+            "default": "gemini_api"
+        },
+        {
+            "id": "modelArgs",
+            "type": "promptString",
+            "description": "Model arguments (comma-separated key=value pairs)",
+            "default": "model_version=gemini-2.0-flash"
+        },
+        {
+            "id": "tasks",
+            "type": "promptString",
+            "description": "Tasks to evaluate",
+            "default": "test_extract_gdt"
+        },
+        {
+            "id": "logSuffix",
+            "type": "promptString",
+            "description": "Log samples suffix",
+            "default": "debug_custom_run"
+        }
+    ]
+}
