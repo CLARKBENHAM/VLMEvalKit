@@ -86,8 +86,17 @@ def dynamic_preprocess(image, min_num=1, max_num=6, image_size=448, use_thumbnai
     return processed_images
 
 
+def downsample_image(img, scale_factor=0.5):
+    width, height = img.size
+    new_width = int(width * scale_factor)
+    new_height = int(height * scale_factor)
+    return img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+
 def load_image(image_file, input_size=448, max_num=6, upscale=False):
-    image = Image.open(image_file).convert('RGB')
+    #image = Image.open(image_file).convert('RGB').resize((1024, 768), Image.Resampling.LANCZOS)
+    image = Image.open(image_file).convert('RGB').resize((768, 576), Image.Resampling.LANCZOS)
+    #image = downsample_image(Image.open(image_file).convert('RGB'), scale_factor=0.7)
+    print("GRIB")
     if upscale:
         image = image.resize((image.width * 2, image.height * 2), Image.BILINEAR)
     transform = build_transform(input_size=input_size)
