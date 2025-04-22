@@ -86,7 +86,7 @@ o1_apis = {
         GPT4V,
         model="o1-2024-12-17",
         key=o1_key,
-        api_base='OFFICIAL', 
+        api_base='OFFICIAL',
         temperature=0,
         img_detail='high',
         retry=10,
@@ -187,13 +187,13 @@ api_models = {
         verbose=False,
     ),
     "GPT4.5": partial(
-        GPT4V, 
+        GPT4V,
         model='gpt-4.5-preview-2025-02-27',
-        temperature=0, 
+        temperature=0,
         timeout=600,
-        img_size=-1, 
-        img_detail='high', 
-        retry=10, 
+        img_size=-1,
+        img_detail='high',
+        retry=10,
         verbose=False,
     ),
     "gpt-4.1-2025-04-14": partial(
@@ -404,13 +404,13 @@ api_models = {
     #     url="https://platform.wair.ac.cn/api/v1/infer/10381/v1/chat/completions",
     # ),
     'Taichu-VLR-3B': partial(
-        TaichuVLRAPI, 
-        model='taichu_vlr_3b', 
+        TaichuVLRAPI,
+        model='taichu_vlr_3b',
         url="https://platform.wair.ac.cn/maas/v1/chat/completions"
     ),
     'Taichu-VLR-7B': partial(
-        TaichuVLRAPI, 
-        model='taichu_vlr_7b', 
+        TaichuVLRAPI,
+        model='taichu_vlr_7b',
         url="https://platform.wair.ac.cn/maas/v1/chat/completions"
     ),
     # doubao_vl
@@ -419,11 +419,11 @@ api_models = {
     ),
     # Shopee MUG-U
     'MUG-U-7B': partial(
-        MUGUAPI, 
-        model='MUG-U', 
-        temperature=0,  
-        retry=10, 
-        verbose=False, 
+        MUGUAPI,
+        model='MUG-U',
+        temperature=0,
+        retry=10,
+        verbose=False,
         timeout=300),
     # grok
     "grok-vision-beta": partial(
@@ -1059,6 +1059,13 @@ qwen2vl_series = {
         max_pixels=16384 * 28 * 28,
         use_custom_prompt=False,
     ),
+    "Qwen2.5-Omni-7B": partial(
+        Qwen2VLChat,
+        model_path="Qwen/Qwen2.5-Omni-7B",
+        min_pixels=1280 * 28 * 28,
+        max_pixels=16384 * 28 * 28,
+        use_custom_prompt=False,
+    ),
     "Qwen2.5-VL-7B-Instruct": partial(
         Qwen2VLChat,
         model_path="Qwen/Qwen2.5-VL-7B-Instruct",
@@ -1095,16 +1102,16 @@ qwen2vl_series = {
         use_custom_prompt=False,
     ),
     'VLM-R1': partial(
-        VLMR1Chat, 
-        model_path='omlab/VLM-R1-Qwen2.5VL-3B-Math-0305', 
-        min_pixels=1280*28*28, 
-        max_pixels=16384*28*28, 
+        VLMR1Chat,
+        model_path='omlab/VLM-R1-Qwen2.5VL-3B-Math-0305',
+        min_pixels=1280*28*28,
+        max_pixels=16384*28*28,
         use_custom_prompt=False),
     'VLAA-Thinker-Qwen2.5VL-3B': partial(
-        VLAAThinkerChat, 
-        model_path='UCSC-VLAA/VLAA-Thinker-Qwen2.5VL-3B', 
-        min_pixels=1280*28*28, 
-        max_pixels=16384*28*28, 
+        VLAAThinkerChat,
+        model_path='UCSC-VLAA/VLAA-Thinker-Qwen2.5VL-3B',
+        min_pixels=1280*28*28,
+        max_pixels=16384*28*28,
         use_custom_prompt=False,
         post_process=True, # post processing for evaluation
         system_prompt=(''
@@ -1117,10 +1124,10 @@ qwen2vl_series = {
                 ),
     ),
     'VLAA-Thinker-Qwen2.5VL-7B': partial(
-        VLAAThinkerChat, 
-        model_path='UCSC-VLAA/VLAA-Thinker-Qwen2.5VL-7B', 
-        min_pixels=1280*28*28, 
-        max_pixels=16384*28*28, 
+        VLAAThinkerChat,
+        model_path='UCSC-VLAA/VLAA-Thinker-Qwen2.5VL-7B',
+        min_pixels=1280*28*28,
+        max_pixels=16384*28*28,
         use_custom_prompt=False,
         post_process=True, # post processing for evaluation
         system_prompt=(''
@@ -1156,10 +1163,16 @@ moondream_series = {
 }
 
 llama_series = {
+    "Llama-3.2-11B-Vision": partial(
+        llama_vision, model_path="meta-llama/Llama-3.2-11B-Vision"
+    ),
     "Llama-3.2-11B-Vision-Instruct": partial(
         llama_vision, model_path="meta-llama/Llama-3.2-11B-Vision-Instruct"
     ),
     "LLaVA-CoT": partial(llama_vision, model_path="Xkev/Llama-3.2V-11B-cot"),
+    "Llama-3.2-90B-Vision": partial(
+        llama_vision, model_path="meta-llama/Llama-3.2-90B-Vision"
+    ),
     "Llama-3.2-90B-Vision-Instruct": partial(
         llama_vision, model_path="meta-llama/Llama-3.2-90B-Vision-Instruct"
     ),
@@ -1240,7 +1253,7 @@ kimi_series = {
 }
 
 internvl_groups = [
-    internvl, internvl2, internvl2_5, mini_internvl, internvl2_5_mpo, 
+    internvl, internvl2, internvl2_5, mini_internvl, internvl2_5_mpo,
     internvl3,
 ]
 internvl_series = {}
@@ -1251,9 +1264,9 @@ supported_VLM = {}
 
 model_groups = [
     ungrouped, o1_apis, api_models, xtuner_series, qwen_series, llava_series,
-    internvl_series, yivl_series, xcomposer_series, minigpt4_series, 
-    idefics_series, instructblip_series, deepseekvl_series, deepseekvl2_series, 
-    janus_series, minicpm_series, cogvlm_series, wemm_series, cambrian_series, 
+    internvl_series, yivl_series, xcomposer_series, minigpt4_series,
+    idefics_series, instructblip_series, deepseekvl_series, deepseekvl2_series,
+    janus_series, minicpm_series, cogvlm_series, wemm_series, cambrian_series,
     chameleon_series, video_models, ovis_series, vila_series, mantis_series,
     mmalaya_series, phi3_series, phi4_series, xgen_mm_series, qwen2vl_series,
     slime_series, eagle_series, moondream_series, llama_series, molmo_series,

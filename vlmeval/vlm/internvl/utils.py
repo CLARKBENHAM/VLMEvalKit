@@ -94,7 +94,8 @@ def downsample_image(img, scale_factor=0.5):
 
 def load_image(image_file, input_size=448, max_num=6, upscale=False):
     #image = Image.open(image_file).convert('RGB').resize((1024, 768), Image.Resampling.LANCZOS)
-    image = Image.open(image_file).convert('RGB').resize((768, 576), Image.Resampling.LANCZOS)
+    #image = Image.open(image_file).convert('RGB').resize((768, 576), Image.Resampling.LANCZOS)
+    image = Image.open(image_file).convert('RGB').resize((576, 423), Image.Resampling.LANCZOS)
     #image = downsample_image(Image.open(image_file).convert('RGB'), scale_factor=0.7)
     print("GRIB")
     if upscale:
