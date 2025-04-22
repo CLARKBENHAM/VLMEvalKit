@@ -153,7 +153,9 @@ class Ovis1_6(BaseModel):
             self.model_path,
             torch_dtype=self.dtype,
             multimodal_max_length=8192,
-            trust_remote_code=True
+            trust_remote_code=True,
+            #torch_dtype=torch.float32,
+            attn_implementation="eager"
         )
         self.model = self.model.eval().to(device=self.device)
         self.eos_token_id = self.model.generation_config.eos_token_id

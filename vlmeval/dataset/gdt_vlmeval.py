@@ -1,3 +1,4 @@
+#%%
 # gdt_vlmeval.py
 import os
 import argparse
@@ -160,10 +161,9 @@ class GDTBenchmarkDataset(ImageBaseDataset):
                     sample["question"] = prompt_or_messages
 
                 samples.append(sample)
-            if len(samples) > 5:
-                self.logger.warning("HARDCODE STOP AT 5 inputs")
-                print(prompt_or_messages) # TEMP
-                break
+            #     self.logger.warning("HARDCODE STOP after first image")
+            #     print(prompt_or_messages) # TEMP
+            #     break
 
         # Create the dataset file
         os.makedirs(os.path.dirname(self.data_file), exist_ok=True)
@@ -273,12 +273,12 @@ class GDTBenchmarkDataset(ImageBaseDataset):
         # Calculate overall metrics
         results_df = pd.DataFrame(results)
         metrics = {
-            "accuracy": results_df["correct"].mean() if len(results_df) > 0 else 0.0,
-            "total_samples": len(results_df),
-            "correct_samples": results_df["correct"].sum() if len(results_df) > 0 else 0,
+            'set': 'all',
+            'accuracy': float(results_df["correct"].mean()) if len(results_df) > 0 else 0.0,
+            'total_samples': int(len(results_df)),
+            'correct_samples': int(results_df["correct"].sum()) if len(results_df) > 0 else 0
         }
-
-        # Per-assembly metrics (optional)
+            # Per-assembly metrics (optional)
         if "assembly_id" in df.columns:
             for assembly_id in df["assembly_id"].unique():
                 assembly_mask = df["assembly_id"] == assembly_id
@@ -334,6 +334,7 @@ if __name__ == "__main__":
     api = HfApi()
 
     # Create the dataset repository
+    api.delete_repo(repo_id="CLARKBENHAM/gdt_vlmeval", repo_type="dataset")
     api.create_repo(repo_id="CLARKBENHAM/gdt_vlmeval", repo_type="dataset")
 
     # Upload the file
@@ -352,8 +353,8 @@ if __name__ == "__main__":
             "--csv_path", default="data/fsi_labels/Hadrian Vllm test case - Final Merge.csv"
         )
         parser.add_argument("--eval_dir", default="data/eval_on/single_images/")
-        parser.add_argument("--n_shot_imgs", type=int, default=3)
-        parser.add_argument("--eg_per_img", type=int, default=5)
+        parser.add_argument("--n_shot_imgs", type=int, default=4)
+        parser.add_argument("--eg_per_img", type=int, default=50)
         parser.add_argument("--multiturn", action="store_true", help="Use multiturn format")
         parser.add_argument("--model", default="llava", help="Model name in VLMEvalKit")
         parser.add_argument("--model_path", help="Path/name for model initialization")

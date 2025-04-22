@@ -62,7 +62,12 @@ class Gemma3(BaseModel):
             raise e
 
         self.model = Gemma3ForConditionalGeneration.from_pretrained(
-            model_path, device_map="cuda", attn_implementation="flash_attention_2"
+            model_path, device_map="cuda",
+            attn_implementation="flash_attention_2",
+            torch_dtype=torch.bfloat16,      # keeps accuracy, halves memory
+            #attn_implementation="eager",     # or omit if flash‑attn is gone
+            low_cpu_mem_usage=True,
+            max_memory={i: "78GiB" for i in range(torch.cuda.device_count())},
         ).eval()
 
         self.device = self.model.device
