@@ -28,6 +28,20 @@ def build_model_from_config(cfg, model_name):
     else:
         raise ValueError(f'Class {cls_name} is not supported in `vlmeval.api` or `vlmeval.vlm`')
 
+# Create a custom JSON encoder
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.int64)):
+            return int(obj)
+        if isinstance(obj, (np.floating, np.float32, np.float64)):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        if isinstance(obj, pd.DataFrame):
+            return obj.to_dict(orient='records')
+        if pd.isna(obj):
+            return None
+        return super().default(obj)
 
 def build_dataset_from_config(cfg, dataset_name):
     import vlmeval.dataset
@@ -418,7 +432,7 @@ def main():
                         logger.info(f'The evaluation of model {model_name} x dataset {dataset_name} has finished! ')
                         logger.info('Evaluation Results:')
                         if isinstance(eval_results, dict):
-                            logger.info('\n' + json.dumps(eval_results, indent=4))
+                            logger.info('\n' + json.dumps(eval_results, indent=4, cls=NumpyEncoder))
                         elif isinstance(eval_results, pd.DataFrame):
                             if len(eval_results) < len(eval_results.columns):
                                 eval_results = eval_results.T
