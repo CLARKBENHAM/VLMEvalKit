@@ -14,15 +14,32 @@ mkdir -p "$CUSTOM_RAY_DIR"
 
 # Set environment variables that Ray will use
 export RAY_OVERRIDE_TEMP_DIR="$CUSTOM_RAY_DIR"
+export RAY_TMPDIR="$CUSTOM_RAY_DIR"
 export RAY_OVERRIDE_REDIS_PORT=6399  # Default is 6379
 export RAY_OVERRIDE_DASHBOARD_PORT=8299  # Default is 8265
-# export RAY_ADDRESS="localhost:$RAY_OVERRIDE_REDIS_PORT"
-unset RAY_ADDRESS
+export RAY_START_HEAD=1
 
-# Tell LMDeploy to use a different Ray session
-export RAY_JOB_ID="custom_job_$(date +%s)"
-export RAY_RUNTIME_ENV_PRECREATE_FAIL_BEHAVIOR="soft"
-export RAY_RUNTIME_ENV_LOCAL_CACHE_SIZE_GB=1
+unset RAY_ADDRESS
+unset RAY_JOB_ID
+unset RAY_RUNTIME_ENV_PRECREATE_FAIL_BEHAVIOR
+unset RAY_RUNTIME_ENV_LOCAL_CACHE_SIZE_GB
+
+export RAY_TEMP_DIR="/tmp/ray_$(whoami)_$(date +%s)"
+export RAY_PLASMA_DIR="$RAY_TEMP_DIR/plasma"
+mkdir -p "$RAY_TEMP_DIR" "$RAY_PLASMA_DIR"
+
+# Start your own Ray instance with custom ports
+# ray start --head \
+#     --port 6390 \
+#     --gcs-server-port 6391 \
+#     --object-manager-port 8086 \
+#     --node-manager-port 8087 \
+#     --dashboard-port 8299 \
+#     --temp-dir "$RAY_TEMP_DIR" \
+#     --plasma-directory "$RAY_PLASMA_DIR" \
+#     --redis-password "your_secret_$(whoami)"
+
+# Set environment variables to tell lmdeploy to use your Ray instance
 
 for MODEL in \
 	meta-llama/Llama-3.2-11B-Vision \
