@@ -194,7 +194,7 @@ class GDTBenchmarkDataset(ImageBaseDataset):
             for d in
             (
                 [
-                    dict(type="image", role=m["role"], value=m["image_path"]),
+                    dict(type="image_path", role=m["role"], value=m["image_path"]),
                     dict(type="text", role=m["role"], value=m["content"]),
                 ]
                 if "image_path" in m
