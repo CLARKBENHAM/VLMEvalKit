@@ -85,6 +85,17 @@ class llama_vision(BaseModel):
 
         self.device = 'cuda'
         self.processor = AutoProcessor.from_pretrained(model_path)
+        if not hasattr(self.processor, 'chat_template') or not self.processor.chat_template:
+            print("WARN: No chat_template set. Providing a default (Guess)")
+
+            self.processor.chat_template = """<|begin_of_text|><|system|>
+            {{ system_prompt }}</s>
+            <|user|>
+            {{ user_message }}</s>
+            <|assistant|>
+            {{ assistant_message }}</s>"""
+
+
         if 'Instruct' in model_path or 'cot' in model_path or 'CoT' in model_path:
             kwargs_default = dict(do_sample=True, temperature=0.6, top_p=0.9)
         else:
