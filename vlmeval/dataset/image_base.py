@@ -109,7 +109,7 @@ class ImageBaseDataset:
         if 'image' in line:
             if isinstance(line['image'], list):
                 tgt_path = []
-                assert 'image_path' in line
+                assert 'image_path' in line, line
                 for img, im_name in zip(line['image'], line['image_path']):
                     path = osp.join(self.img_root, im_name)
                     if not read_ok(path):
@@ -121,7 +121,7 @@ class ImageBaseDataset:
                     decode_base64_to_image_file(line['image'], tgt_path)
                 tgt_path = [tgt_path]
         else:
-            assert 'image_path' in line
+            assert 'image_path' in line, line
             tgt_path = toliststr(line['image_path'])
 
         return tgt_path
