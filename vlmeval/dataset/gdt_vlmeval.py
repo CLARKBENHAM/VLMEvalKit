@@ -171,7 +171,9 @@ class GDTBenchmarkDataset(ImageBaseDataset):
         self.logger.info(f"Created dataset with {len(samples)} samples at {self.data_file}")
 
     def load_data(self, dataset): # grib if splits
-        return load(self.data_file)
+        df = load(self.data_file)
+        df['image_path'] = df['messages'].apply(lambda messages: list(set([m['image_path'] for m in messages if 'image_path' in m])) )
+        return
 
     def build_prompt(self, line):
         """
@@ -188,13 +190,20 @@ class GDTBenchmarkDataset(ImageBaseDataset):
 
         messages = eval(line["messages"])  # Convert string representation back to list
         # [dict(type='image', value=IMAGE_PTH), dict(type='text', value=prompt)] # as ordering not list of lists
+        if 'image_path' not in line:
+            print("grib; expected image_path due to hardcode", line)
+            #     line['image_path'] = list(set([m['image_path'] for m in messages if 'image_path' in m]))
+            for message in messages:
+                if "image_path" in message:
+                    # if only takes 1 image path then send the last one (q img)
+                    line["image_path"] = message["image_path"]
         return [
             d
             for m in messages
             for d in
             (
                 [
-                    dict(type="image_path", role=m["role"], value=m["image_path"]),
+                    dict(type="image", role=m["role"], value=m["image_path"]),
                     dict(type="text", role=m["role"], value=m["content"]),
                 ]
                 if "image_path" in m
